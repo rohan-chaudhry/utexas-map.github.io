@@ -1,0 +1,211 @@
+<!doctype html> 
+<html> 
+	<head>
+		<title>utexas map</title> 
+		<link rel="icon" href="longhorn.png">
+		<div class='header'> 
+		<h1><font face = "Century Gothic">water & energy use @utexas</h1> 
+		test<br/>the idea is for the popups to display general data about that building for either all years or a specific year
+		will also look into color coding buildings by usage/sq.ft<br/>currently, test buildings are labeled as stars (that can 
+		also change)
+		
+		</div> 
+		
+		<!-- <link rel="stylesheet" type="text/css" href="style2.css"> css--> 
+		<!---<link rel="icon" href="icon.png">   add utexas icon here---> 
+		<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
+		<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
+		<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <style>
+        body { margin:0; padding:0; }
+        //#map { position:absolute; top:1; bottom:0; width:100%; } 
+    </style>
+	</head>
+	
+	<body>
+
+		<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.min.js'></script>
+		<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.css' type='text/css' />
+
+
+		<!-- <canvas id="map-canvas" width="900" height="600"
+		style="border:4px solid #000000;"></canvas> this is like a border for the map-->
+		<div id='map' style='width: 900px; height: 600px;'></div> 
+		<script>	
+		mapboxgl.accessToken = 'pk.eyJ1Ijoicm9oYW4tYyIsImEiOiJjamp5d2R2a3c1ejRiM3FybTNhODllcWl2In0.iROIlKcwwQI-mGb809Ll-A';
+		var map = new mapboxgl.Map({
+		container: 'map',
+		style: 'mapbox://styles/mapbox/streets-v10', 
+		center: [-97.73921,30.28565],
+		minZoom: 14
+		});
+		map.addControl(new MapboxGeocoder({
+		accessToken: mapboxgl.accessToken
+		}));
+		
+		map.on('load', function() {
+
+    // Add a layer showing the places.
+	/* have to serach for LatLong online anyways, so will hardcode all building data
+		for 2012 test case*/ 
+		map.addLayer({
+        "id": "places",
+        "type": "symbol",
+        "source": {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+                "features": [{
+				
+				/*
+				for building in excel file: 
+				        "type": "Feature",
+						"properties": {
+                        "description": "<strong> {building name} </strong><p> ***show general usage info *** </p>",
+                        "icon": "star" // change icons depending on usage 
+						
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [LONG[building], LAT[building]] // get coordinates from excel sheet
+                    }
+                }
+					
+				
+				*/ 
+				
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Mail Service Building</strong><p>MSB usages is as follows</p>",
+                        "icon": "star" // change icons depending on usage?  
+						
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.725688, 30.282746] // get coordinates from excel sheet
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Andrews Dormitory</strong><p>AND usages is as follows</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.739899, 30.288161]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Animal Resource Center</strong><p>ARC usage is as follows</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.736271, 30.291648]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Anna Hiss Gymnasium</strong><p>AHG use is as follows</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.737864, 30.288504]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Art Building and Museum</strong><p>ART usage</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.733046, 30.286198]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Banedict Hall</strong><p>BEN</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.739116, 30.283991]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Battle Hall</strong><p>BTL usage</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.740449, 30.285441]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Batts Hall</strong><p>BAT</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.739118, 30.284821]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "description": "<strong>Beauford H. Jester Center</strong><p>JES</p>",
+                        "icon": "star"
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [-97.736803, 30.282891]
+                    }
+                }]
+            }
+        },
+        "layout": {
+            "icon-image": "{icon}-15",
+            "icon-allow-overlap": true
+        }
+    });
+
+    // Create a popup, but don't add it to the map yet.
+    var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+    });
+
+    map.on('mouseenter', 'places', function(e) {
+        // Change the cursor style as a UI indicator.
+        map.getCanvas().style.cursor = 'pointer';
+
+        var coordinates = e.features[0].geometry.coordinates.slice();
+        var description = e.features[0].properties.description;
+
+        // Ensure that if the map is zoomed out such that multiple
+        // copies of the feature are visible, the popup appears
+        // over the copy being pointed to.
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        // Populate the popup and set its coordinates
+        // based on the feature found.
+        popup.setLngLat(coordinates)
+            .setHTML(description)
+            .addTo(map);
+    });
+
+    map.on('mouseleave', 'places', function() {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+    });
+});
+		
+</script>
+<br/> moving forward I would want to: <br>- limit search  bar to only UT buildings <br/>- color code building icons
+	</body> 
