@@ -1,5 +1,23 @@
-<!doctype html> 
+<!--doctype html--> 
+
+
+<!---
+TO DO: 
+  
+look into hyperlinking additional info 
+additional info would be individual graphs 
+thinking of linking to a page that has all graph data 
+  (would be nice to load directly to the building) 
+  (result function could input building name, then return positioned page from that)
+
+for python, graph raw use ranking vs c/sf ranking and see relationship 
+1-   http://members.questline.com/Article.aspx?articleID=7372&accountID=2635&nl=16722
+2- https://water.usgs.gov/edu/qa-home-percapita.html
+            avg house uses 80-100 gal/day 
+	check if use is warranted 
+---> 
 <html> 
+
 	<head>
 		<title>utexas map</title> 
 		<link rel="icon" href="longhorn.png">
@@ -8,8 +26,14 @@
 		test<br/>the idea is for the popups to display general data about that building for either all years or a specific year
 		will also look into color coding buildings by usage/sq.ft<br/>currently, test buildings are labeled as stars (that can 
 		also change)
-		
+		<!-- pic and pre were here before --> 
+
 		</div> 
+		<div class = 'container'> 
+			<p align='left'><img src="spectrum final.png" alt = 'spec' width='908px' height = '30px'/></p> 
+			<div class='centeredr' align = 'left'>1m+ gallons consumed</div>
+			<div class='centeredl' align = 'left'>0 gallons consumed</div>
+			</div> 
 		
 		<!-- <link rel="stylesheet" type="text/css" href="style2.css"> css--> 
 		<!---<link rel="icon" href="icon.png">   add utexas icon here---> 
@@ -19,6 +43,55 @@
     <style>
         body { margin:0; padding:0; }
         //#map { position:absolute; top:1; bottom:0; width:100%; } 
+		#menu {
+			background: #fff;
+			position: absolute;
+			z-index: 1;
+			top: 210px;
+			left: 4px;
+			
+			width: 90px; 
+			border: .5px solid rgba(0,0,0,0.4);
+			font-family: 'Open Sans', sans-serif;
+		}
+		
+				
+		
+		.container {
+			position: relative;
+			text-align: center;
+			color: black;
+		}
+		.centeredr {
+			position: absolute;
+			top: 50%;
+			left: 810px;
+			transform: translate(-50%, -50%);
+			
+		}
+		.centeredl {
+			position: absolute;
+			top: 50%;
+			left: 80px;
+			transform: translate(-50%, -50%);
+			
+		}
+		#screen2{ 
+			font-size: 25px; 
+			font-weight: 550; 
+			text-align: left; 
+			bottom:0; 		
+		} 
+		
+		.footer{ 
+		    position: fixed;
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			text-align: center; 
+		
+		} 
+	
     </style>
 	</head>
 	
@@ -26,165 +99,2917 @@
 
 		<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.min.js'></script>
 		<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.css' type='text/css' />
-
-
-		<!-- <canvas id="map-canvas" width="900" height="600"
-		style="border:4px solid #000000;"></canvas> this is like a border for the map-->
-		<div id='map' style='width: 900px; height: 600px;'></div> 
+		<div id='map' style='width: 900px; height: 600px; border:4px solid #000000;'></div> 
+		
+		<nav id="menu"></nav> <!-- added for second layer --> 
+		
 		<script>	
+		// using mapbox 
+		// also using SheetJS: https://github.com/SheetJS/js-xlsx
 		mapboxgl.accessToken = 'pk.eyJ1Ijoicm9oYW4tYyIsImEiOiJjamp5d2R2a3c1ejRiM3FybTNhODllcWl2In0.iROIlKcwwQI-mGb809Ll-A';
 		var map = new mapboxgl.Map({
 		container: 'map',
 		style: 'mapbox://styles/mapbox/streets-v10', 
 		center: [-97.73921,30.28565],
-		minZoom: 14
+		minZoom: 14,
+		maxZoom: 19
 		});
 		map.addControl(new MapboxGeocoder({
 		accessToken: mapboxgl.accessToken
 		}));
-		
-		map.on('load', function() {
 
-    // Add a layer showing the places.
-	/* have to serach for LatLong online anyways, so will hardcode all building data
-		for 2012 test case*/ 
+		var building_info = [ 
+			//courtesy the JSON  
+     //FN 0    ,      name  1     ,        GSF 2   ,     lat 3  ,    4  long  , 5 gal consumed 2012 ... if available:  6  tot rank , 7 use/sqft , 8 use/sqft rank 
+['water_MSB.csv','MAIL SERVICE BUILDING',3297,30.282746,-97.725688,'2012 usage data not available'],
+['water_AND.csv','ANDREWS DORMITORY',41241,30.288161,-97.739899,'2012 usage data not available'],
+['water_ARC.csv','ANIMAL RESOURCES CENTER',95856,30.291648,-97.736271,2558100,14,26.687,8],
+['water_AHG.csv','ANNA HISS GYMNASIUM',55240,30.288504,-97.737864,180200,60,3.262,53],
+['water_ART.csv','ART BUILDING AND MUSEUM',157723,30.286198,-97.733046,1032600,33,6.547,39],
+['water_BTL.csv','BATTLE HALL',47191,30.285441,-97.740449,'2012 usage data not available'],
+['water_BAT.csv','BATTS HALL',39143,30.284821,-97.739118,119000,64,3.04,55],
+['water_JES.csv','BEAUFORD H. JESTER CENTER',179115,30.282891,-97.736803,8992310,3,50.204,1],
+['water_BEN.csv','BENEDICT HALL',38598,30.283991,-97.739116,269200,58,6.974,35],
+['water_BRB.csv','BERNARD AND AUDRE RAPOPORT BUILDING',50846,30.285244,-97.736793,'2012 usage data not available'],
+['water_BME.csv','BIOMEDICAL ENGINEERING BUILDING',202942,30.289276,-97.738786,2437300,15,12.01,22],
+['water_BLD.csv','BLANTON DORMITORY',69754,30.288643,-97.739386,1767500,22,25.339,11],
+['water_BHD.csv','BRACKENRIDGE HALL DORM',40697,30.283161,-97.735994,1352980,29,33.245,5],
+['water_BUR.csv','BURDINE HALL',101555,30.288865,-97.738444,378400,52,3.726,48],
+['water_CAL.csv','CALHOUN HALL',55085,30.284503,-97.740171,'2012 usage data not available'],
+['water_CRD.csv','CAROTHERS DORMITORY',39648,30.288687,-97.740091,865400,38,21.827,13],
+['water_CPE.csv','CHEMICAL AND PETROLEUM ENGINEERING',275793,30.290196,-97.736265,5410530,5,19.618,16],
+['water_CDL.csv','COLLECTIONS DEPOSIT LIBRARY',64749,30.278791,-97.733031,18400,67,0.284,66],
+['water_CBA.csv','COLLEGE OF BUSINESS ADMINISTRATION',253863,30.284239,-97.737802,1131443,31,4.457,44],
+['water_CRB.csv','COMPUTATIONAL RESOURCE BUILDING',29961,30.282213,-97.72652,'2012 usage data not available'],
+['water_CRH.csv','CREEKSIDE RESIDENCE HALL',39649,30.288492,-97.733402,'2012 usage data not available'],
+['water_STD.csv','DARRELL K ROYAL TX MEMORIAL STADIUM',426472,30.283589,-97.732553,'2012 usage data not available'],
+['water_DCP.csv','DENTON A. COOLEY PAVILION',44564,30.276237,-97.733197,372700,54,8.363,30],
+['water_DFA.csv','E. WILLIAM DOTY FINE ARTS BUILDING',91254,30.285876,-97.731911,343330,56,3.762,47],
+['water_EPS.csv','E.P. SCHOCH BUILDING',52559,30.285788,-97.736722,167300,61,3.183,54],
+['water_EAS.csv','EDGAR A. SMITH BUILDING',60096,30.281142,-97.738208,1016700,34,16.918,19],
+['water_ETC.csv','ENGINEERING TEACHING CENTER II',229973,30.289874,-97.735412,4863000,6,21.146,14],
+['water_ECJ.csv','ERNEST COCKRELL JR. HALL',245170,30.289024,-97.735436,2336560,16,9.53,27],
+['water_UTX.csv','ETTER-HARBIN ALUMNI CENTER',82939,30.284266,-97.734444,568000,46,6.848,36],
+['water_WIN.csv','F.L. WINSHIP DRAMA BLDG.',107522,30.285765,-97.73449,'2012 usage data not available'],
+['water_ERC.csv','FRANK C ERWIN SPECIAL EVENTS CENTER',503634,30.276946,-97.732209,3582600,11,7.113,33],
+['water_GAR.csv','GARRISON HALL',51778,30.285187,-97.738523,225300,59,4.351,45],
+['water_GDC.csv','GATES DELL COMPLEX',237702,30.286292,-97.736645,'2012 usage data not available'],
+['water_SZB.csv','GEORGE I. SANCHEZ BUILDING',258353,30.281671,-97.738814,1325300,30,5.13,41],
+['water_GOL.csv','GOLDSMITH HALL',85623,30.285319,-97.741158,310800,57,3.63,49],
+['water_GSB.csv','GRADUATE SCHOOL OF BUSINESS BLDG.',147205,30.284084,-97.738392,1444210,26,9.811,26],
+['water_GRE.csv','GREGORY GYMNASIUM',262162,30.284221,-97.736566,4432500,7,16.907,20],
+['water_HRC.csv','HARRY RANSOM CENTER',252268,30.284325,-97.741124,376560,53,1.493,63],
+['water_PAT.csv','J.T. PATTERSON LABS.BLDG.',155882,30.288036,-97.736447,1674100,23,10.74,23],
+['water_BMA.csv','JACK S. BLANTON MUSEUM OF ART',137522,30.280836,-97.737707,139200,62,1.012,64],
+['water_JGB.csv','JACKSON GEOLOGICAL SCIENCES BLDG.',199628,30.285823,-97.735711,993200,35,4.975,42],
+['water_CMA.csv','JESSE H. JONES COMM. CTR. (BLDG. A)',111356,30.28935,-97.740739,1966820,19,17.662,18],
+['water_JON.csv','JESSE H. JONES HALL',216050,30.288641,-97.73177,468000,49,2.166,62],
+['water_JCD.csv','JESTER DORMITORY',745671,30.282197,-97.73646,36044000,1,48.338,2],
+['water_TCC.csv','JOE C THOMPSON CONFERENCE CENTER',52357,30.287077,-97.729171,483200,48,9.229,29],
+['water_BEL.csv','L. THEO BELLMONT HALL',399331,30.283883,-97.733652,'2012 usage data not available'],
+['water_TSC.csv','LEE & JOE JAMAIL TEXAS SWIMMING CTR',122122,30.279924,-97.733328,3800800,9,31.123,6],
+['water_CLA.csv','LIBERAL ARTS BUILDING',225813,30.284998,-97.735473,'2012 usage data not available'],
+['water_LTD.csv','LITTLEFIELD DORMITORY',57334,30.289381,-97.739717,'2012 usage data not available'],
+['water_LBJ.csv','LYNDON B JOHNSON LIBRARY',170607,30.285843,-97.729285,388400,50,2.277,60],
+['water_GEA.csv','MARY E. GEARING HALL',60621,30.287842,-97.739223,'2012 usage data not available'],
+['water_MEZ.csv','MEZES HALL',91629,30.284402,-97.738983,384000,51,4.191,46],
+['water_MBB.csv','MOFFETT MOLECULAR BIOLOGY BLDG.',177216,30.288471,-97.737256,1837000,21,10.366,25],
+['water_MNC.csv','MONCRIEF-NEUHAUS ATHLETIC CENTER',103123,30.282372,-97.732696,2121000,17,20.568,15],
+['water_MHD.csv','MOORE-HILL DORMITORY',97370,30.283628,-97.735337,3660100,10,37.59,4],
+['water_MRH.csv','MUSIC BUILDING & RECITAL HALL',218024,30.287388,-97.731228,651802,44,2.99,56],
+['water_NMS.csv','NEURAL AND MOLECULAR SCIENCE BLDG.',198488,30.289261,-97.73709,2060000,18,10.378,24],
+['water_NHB.csv','NORMAN HACKERMAN BUILDING',305224,30.287665,-97.73803,'2012 usage data not available'],
+['water_NOA.csv','NORTH OFFICE BUILDING A',86167,30.289985,-97.737947,682920,43,7.926,31],
+['water_NUR.csv','NURSING SCHOOL',111195,30.277775,-97.733557,364900,55,3.282,51],
+['water_PAR.csv','PARLIN HALL',56137,30.284907,-97.74011,17890,68,0.319,65],
+['water_PAC.csv','PERFORMING ARTS CENTER',234662,30.286186,-97.731231,769000,42,3.277,52],
+['water_PCL.csv','PERRY-CASTANEDA LIBRARY',492898,30.282685,-97.738219,3349000,12,6.795,38],
+['water_FAC.csv','PETER T. FLAWN ACADEMIC CENTER',205141,30.286357,-97.740311,1403200,28,6.84,37],
+['water_PHR.csv','PHARMACY BUILDING',130577,30.288039,-97.738496,'2012 usage data not available'],
+['water_PHD.csv','PRATHER HALL DORMITORY',44580,30.282372,-97.735082,1901310,20,42.649,3],
+['water_HRH.csv','RAINEY HALL',54405,30.284133,-97.740327,845642,39,15.543,21],
+['water_RSC.csv','RECREATIONAL SPORTS CENTER',119262,30.281577,-97.732462,844000,40,7.077,34],
+['water_MFH.csv','RICHARD MITHOFF TRK/SCR FIELDHOUSE',20372,30.281986,-97.731273,579010,45,37.59,4],
+['water_WEL.csv','ROBERT A. WELCH HALL',428647,30.287029,-97.737793,10181700,2,23.753,12],
+['water_SJH.csv','SAN JACINTO RESIDENCE HALL',301307,30.282425,-97.73438,7716000,4,25.608,9],
+['water_SEA.csv','SARAH M. & CHARLES E. SEAY BUILDING',193723,30.290012,-97.737309,535090,47,2.762,57],
+['water_SSW.csv','SCHOOL OF SOCIAL WORK BUILDING',93460,30.280684,-97.732652,872040,37,9.331,28],
+['water_SRH.csv','SID RICHARDSON HALL',282152,30.285052,-97.728858,927700,36,3.288,50],
+['water_SAC.csv','STUDENT ACTIVITY CENTER',153999,30.284966,-97.735995,3918260,8,25.443,10],
+['water_SSB.csv','STUDENT SERVICES BUILDING',194881,30.29011,-97.738349,1463980,25,7.512,32],
+['water_SUT.csv','SUTTON HALL',59498,30.284989,-97.74082,'2012 usage data not available'],
+['water_TMM.csv','TEXAS MEMORIAL MUSEUM',35018,30.287017,-97.732465,76208,65,2.176,61],
+['water_TNH.csv','TOWNES HALL',167164,30.289143,-97.731173,1080751,32,6.465,40],
+['water_UNB.csv','UNION BUILDING',167238,30.286725,-97.741163,3026650,13,18.098,17],
+['water_UTC.csv','UNIVERSITY TEACHING CENTER',168696,30.283059,-97.738802,774700,41,4.592,43],
+['water_WRW.csv','W.R. WOOLRICH LABS.',77632,30.287559,-97.735761,'2012 usage data not available'],
+['water_WMB.csv','WEST MALL OFFICE BLDG.',46230,30.285427,-97.740622,119001,63,2.574,59],
+['water_HSM.csv','WILLIAM RANDOLPH HEARST BLDG',26033,30.288903,-97.740737,69032.92176,66,2.652,58]
+	] 
+	
+
+	building_info.sort(sort2d); // sort building_info alphabetically by name (AHG--> WRW) 
+	
+	function sort2d(a,b){ //sort building_info by first col (name) 
+	    if (a[0] === b[0]) {
+        return 0;
+			}
+		else {
+        return (a[0] < b[0]) ? -1 : 1;
+			}
+	
+	} 
+	 //FN 0    ,      name  1     ,        GSF 2   ,     lat 3  ,    4  long  , 5 gal consumed 2012 ... if available:  6  tot rank , 7 use/sqft , 8 use/sqft rank 
+	
+	function getsum(name){
+		for (var i = 0; i < building_info.length; i++) {
+        // This if statement depends on the format of your array
+			if ((building_info[i][0] == ('water_'+name+'.csv')) || (building_info[i][1] == (name) )) {
+				var idx = i; // store index of building in building_info
+        }}
+		
+		//if the addreviation inputted, switch to full name
+		/*if(name.length < 5){ 
+			name = building_info[idx][1]; 
+			} */ 
+		
+		if( !~building_info.indexOf( 'water_'+name+'.csv' )){ // if building is in the info list
+			var str = (name + ' has info<br/>'); 
+			var result = str.link("https://www.w3schools.com"); 
+			//document.getElementById("demo").innerHTML = result;
+			// if data available: return it, else: say data not avaialble 
+			
+			if(building_info[idx][5] !== '2012 usage data not available'){ 
+				return("<br/>building: "+ building_info[idx][1] + 
+					"<br/>gallons consumed in 2012: " + building_info[idx][5] + " (rank: " + building_info[idx][6] + ")<br/>" + 
+					"gallons consumed per sq.ft.: " + building_info[idx][7] + " (rank: " + building_info[idx][8] + ")<br/>" + result) ; //result was getgraph(name) 
+			} 
+			else{ 
+				return("<br/>"+ building_info[idx][1] + " does not have data for water consumption in 2012." ) ; 
+				} 
+			
+			 
+			//return("<br/>building: "+ building_info[idx][1] + "<br/>gallons consumed in 2012: (ranking)<br/>gallons consumed per sq.ft.:  <br/> "+ getgraph(name) + '<br/>'+ result); 
+		} 
+		else{
+			return('No info on '+ name);
+		} 
+		
+
+	function getgraph(name){ 
+		if(name == 'MSB'){
+				var str = ('click for detailed 2012 water consumption info<br/>'); 
+				var result = str.link("https://www.w3schools.com");
+				return result; 			
+			}
+	}} 
+
+	total_icon = [ ]; 
+	for(i=0;i< 84;i++){ 
+		datum = [ ]; 
+		ans ={
+          "type": "Feature",
+          "properties": {
+                "description": "<strong>"+building_info[i][0]+"</strong><p>"+building_info[i][0]+" usages is as follows</p>",
+                "icon": "star"
+                    },
+           "geometry": {
+                 "type": "Point",
+                 "coordinates": [building_info[i][3], building_info[i][2]]
+                       }
+            };
+		datum.push(ans); 
+		total_icon.push(datum); 
+		} 
+		//console.log(building_info+'\n\ntotal icon\n\n'); 
+		//console.log(total_icon); 
+		
+		//console.log('function load');
+		
+		map.on('load', function() {  // Add a layer showing utexas buildings as stars 
+	// adding new layer below 
+	
+	 /*
+	// this was giving error, so switching out for hardinging in data 
+	map.addSource('heat source', { // heat map to heat source 
+        //type: 'vector',
+        //url: 'mapbox://mapbox.2opop9hr'
+		type: 'geojson', 
+		data: './waterheat.geojson' // added this , error saying it failed to load 
+									// may need to hardcode in, like with buildigns 
+    });
+	 */ 
+	
+	 
+    map.addLayer({
+        'id': 'heat map',
+        'type': 'heatmap', // from circle to heatmap (which is good) 
+	    "source": {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+ 
+				"features": [
+				
+				{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.725688,30.282746]
+}},
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739899,30.288161]
+}},{"type":"Feature",
+"properties":{"dbh":2558100}, // would this dbh be too large idk 
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736271,30.291648]
+}},
+
+{"type":"Feature",
+"properties":{"dbh":180200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737864,30.288504]
+}},
+
+{"type":"Feature",
+"properties":{"dbh":1032600},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733046,30.286198]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740449,30.285441]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":119000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739118,30.284821]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":8992310},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736803,30.282891]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":269200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739116,30.283991]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736793,30.285244]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2437300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738786,30.289276]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1767500},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739386,30.288643]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1352980},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735994,30.283161]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":378400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738444,30.288865]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740171,30.284503]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":865400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740091,30.288687]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":5410530},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736265,30.290196]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":18400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733031,30.278791]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1131443},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737802,30.284239]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.72652,30.282213]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733402,30.288492]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732553,30.283589]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":372700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733197,30.276237]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":343330},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731911,30.285876]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":167300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736722,30.285788]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1016700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738208,30.281142]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":4863000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735412,30.289874]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2336560},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735436,30.289024]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":568000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.734444,30.284266]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73449,30.285765]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3582600},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732209,30.276946]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":225300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738523,30.285187]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736645,30.286292]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1325300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738814,30.281671]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":310800},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.741158,30.285319]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1444210},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738392,30.284084]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":4432500},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736566,30.284221]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":376560},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.741124,30.284325]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1674100},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736447,30.288036]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":139200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737707,30.280836]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":993200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735711,30.285823]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1966820},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740739,30.28935]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":468000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73177,30.288641]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":36044000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73646,30.282197]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":483200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.729171,30.287077]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733652,30.283883]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3800800},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733328,30.279924]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735473,30.284998]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739717,30.289381]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":388400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.729285,30.285843]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739223,30.287842]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":384000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738983,30.284402]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1837000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737256,30.288471]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2121000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732696,30.282372]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3660100},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735337,30.283628]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":651802},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731228,30.287388]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2060000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73709,30.289261]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73803,30.287665]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":682920},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737947,30.289985]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":364900},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733557,30.277775]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":17890},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.74011,30.284907]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":769000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731231,30.286186]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":3349000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738219,30.282685]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1403200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740311,30.286357]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738496,30.288039]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1901310},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735082,30.282372]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":845642},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740327,30.284133]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":844000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732462,30.281577]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":579010},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731273,30.281986]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":10181700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737793,30.287029]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":7716000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73438,30.282425]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":535090},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737309,30.290012]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":872040},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732652,30.280684]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":927700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.728858,30.285052]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":3918260},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735995,30.284966]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1463980},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738349,30.29011]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.74082,30.284989]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":76208},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732465,30.287017]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1080751},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731173,30.289143]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3026650},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.741163,30.286725]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":774700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738802,30.283059]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735761,30.287559]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":119001},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740622,30.285427]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":69032.92176},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740737,30.288903]
+}}
+
+				
+				
+				
+				] } }, 
+		
+        'layout': {
+            'visibility': 'visible' // starts visible 
+        },
+        'paint': {
+           // 'circle-radius': 8,
+           // 'circle-color': 'rgba(55,148,179,1)'
+		       // increase weight as dbh increases
+			'heatmap-weight': {
+				property: 'dbh',
+				type: 'exponential',
+				stops: [ 
+					// was [1,0],[200000,1] 
+					//[36044000, 1] //max is JCD, min is 1 (default ) 
+					[2,0],
+					[15000000,3]					
+					]
+				},
+			// increase intensity as zoom level increases
+			'heatmap-intensity': {
+				stops: [
+					//[13, 1],
+					/* 
+					[4, 3],
+					[18, 5]*/ 
+					[18,12]
+					]
+				},
+			// assign color values be applied to points depending on their density
+			'heatmap-color': [
+				'interpolate',
+				['linear'],
+				['heatmap-density'],
+				//creates the heat look in blue (like a faded circle effect) 
+				0, 'rgba(236,222,239,0)',
+				0.2, 'rgb(208,209,230)',
+				0.4, 'rgb(166,189,219)',
+				0.6, 'rgb(103,169,207)',
+				0.8, 'rgb(28,144,153)'
+
+				],
+			// increase radius as zoom increases
+			'heatmap-radius': {
+				stops: [
+					[1,21]
+				//	[11, 15],
+				//	[15, 20]
+				]
+				},
+			// decrease opacity to transition into the circle layer
+			'heatmap-opacity': { // everything is opaque(filleD) 
+				default: 1,
+				stops: [
+					[17, 1],
+					[18, 0]
+				]
+		},   
+        }, 
+    }, 'waterway-label');
+	
+	// not adding addsource for places (changed places to buildings) 
+	
+	// new layer above 	
+	// another new layer below (circles) 
+	
+	map.addLayer({
+  id: 'heat-point',
+  type: 'circle',
+  source: {
+            "type": "geojson",
+            "data": {
+                "type": "FeatureCollection",
+ 
+				"features": [
+				
+				{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.725688,30.282746]
+}},
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739899,30.288161]
+}},{"type":"Feature",
+"properties":{"dbh":2558100},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736271,30.291648]
+}},
+
+{"type":"Feature",
+"properties":{"dbh":180200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737864,30.288504]
+}},
+
+{"type":"Feature",
+"properties":{"dbh":1032600},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733046,30.286198]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740449,30.285441]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":119000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739118,30.284821]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":8992310},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736803,30.282891]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":269200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739116,30.283991]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736793,30.285244]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2437300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738786,30.289276]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1767500},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739386,30.288643]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1352980},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735994,30.283161]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":378400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738444,30.288865]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740171,30.284503]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":865400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740091,30.288687]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":5410530},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736265,30.290196]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":18400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733031,30.278791]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1131443},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737802,30.284239]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.72652,30.282213]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733402,30.288492]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732553,30.283589]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":372700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733197,30.276237]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":343330},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731911,30.285876]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":167300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736722,30.285788]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1016700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738208,30.281142]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":4863000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735412,30.289874]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2336560},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735436,30.289024]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":568000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.734444,30.284266]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73449,30.285765]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3582600},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732209,30.276946]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":225300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738523,30.285187]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736645,30.286292]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1325300},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738814,30.281671]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":310800},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.741158,30.285319]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1444210},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738392,30.284084]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":4432500},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736566,30.284221]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":376560},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.741124,30.284325]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1674100},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.736447,30.288036]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":139200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737707,30.280836]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":993200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735711,30.285823]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1966820},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740739,30.28935]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":468000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73177,30.288641]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":36044000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73646,30.282197]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":483200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.729171,30.287077]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733652,30.283883]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3800800},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733328,30.279924]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735473,30.284998]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739717,30.289381]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":388400},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.729285,30.285843]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.739223,30.287842]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":384000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738983,30.284402]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":1837000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737256,30.288471]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2121000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732696,30.282372]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3660100},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735337,30.283628]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":651802},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731228,30.287388]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":2060000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73709,30.289261]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73803,30.287665]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":682920},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737947,30.289985]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":364900},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.733557,30.277775]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":17890},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.74011,30.284907]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":769000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731231,30.286186]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":3349000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738219,30.282685]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1403200},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740311,30.286357]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738496,30.288039]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1901310},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735082,30.282372]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":845642},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740327,30.284133]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":844000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732462,30.281577]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":579010},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731273,30.281986]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":10181700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737793,30.287029]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":7716000},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.73438,30.282425]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":535090},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.737309,30.290012]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":872040},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732652,30.280684]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":927700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.728858,30.285052]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":3918260},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735995,30.284966]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1463980},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738349,30.29011]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.74082,30.284989]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":76208},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.732465,30.287017]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":1080751},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.731173,30.289143]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":3026650},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.741163,30.286725]
+}},
+
+
+{"type":"Feature",
+"properties":{"dbh":774700},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.738802,30.283059]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh": 0 },
+"geometry":
+{"type":"Point",
+"coordinates":[-97.735761,30.287559]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":119001},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740622,30.285427]
+}},
+
+
+
+{"type":"Feature",
+"properties":{"dbh":69032.92176},
+"geometry":
+{"type":"Point",
+"coordinates":[-97.740737,30.288903]
+}}
+
+				
+				
+				
+				] } }, 
+		
+  minzoom: 16,  //min zoom at which this layer appears  
+  paint: {
+    // increase the radius of the circle as the zoom level and dbh value increases
+    'circle-radius': {
+      property: 'dbh',
+      type: 'exponential',
+      stops: [
+	  // changed zoom levels 
+        [{ zoom: 16, value: 1 }, 5],
+        [{ zoom: 16, value: 10000000 }, 10], //10000000 from 62 
+        [{ zoom: 19, value: 1 }, 20],
+        [{ zoom: 19, value: 10000000 }, 50],
+      ]
+    },
+    'circle-color': {
+      property: 'dbh',
+      type: 'exponential',
+      stops: [
+        [0, 'rgba(236,222,239,0)'],
+        [10, 'rgb(236,222,239)'],
+        [20, 'rgb(208,209,230)'],
+        [30, 'rgb(166,189,219)'],
+        [40, 'rgb(103,169,207)'],
+        [50, 'rgb(28,144,153)'],
+        [60, 'rgb(1,108,89)']
+      ]
+    },
+    'circle-stroke-color': 'white',
+    'circle-stroke-width': 1,
+    'circle-opacity': {
+      stops: [
+        [14, 0],
+        [15, 1]
+      ]
+    }
+  }
+}, 'waterway-label');
+	
+	
+	// new circles above 
+	
+		
+		
 		map.addLayer({
-        "id": "places",
+        "id": "buildings", // layer ID == 'places' changed to buildings 
         "type": "symbol",
         "source": {
             "type": "geojson",
             "data": {
                 "type": "FeatureCollection",
-                "features": [{
+ 
+				"features": [
 				
-				/*
-				for building in excel file: 
-				        "type": "Feature",
-						"properties": {
-                        "description": "<strong> {building name} </strong><p> ***show general usage info *** </p>",
-                        "icon": "star" // change icons depending on usage 
-						
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [LONG[building], LAT[building]] // get coordinates from excel sheet
-                    }
-                }
-					
-				
-				*/ 
-				
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Mail Service Building</strong><p>MSB usages is as follows</p>",
-                        "icon": "star" // change icons depending on usage?  
-						
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.725688, 30.282746] // get coordinates from excel sheet
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Andrews Dormitory</strong><p>AND usages is as follows</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.739899, 30.288161]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Animal Resource Center</strong><p>ARC usage is as follows</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.736271, 30.291648]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Anna Hiss Gymnasium</strong><p>AHG use is as follows</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.737864, 30.288504]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Art Building and Museum</strong><p>ART usage</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.733046, 30.286198]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Banedict Hall</strong><p>BEN</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.739116, 30.283991]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Battle Hall</strong><p>BTL usage</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.740449, 30.285441]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Batts Hall</strong><p>BAT</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.739118, 30.284821]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "description": "<strong>Beauford H. Jester Center</strong><p>JES</p>",
-                        "icon": "star"
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [-97.736803, 30.282891]
-                    }
-                }]
+      		 		
+				 {
+"type":"Feature",
+"properties": {
+"description" : '<strong>MAIL SERVICE BUILDING</strong><br/>'+'building summary', // add info here too? 
+"summary":  getsum('MSB'), //building usage summary 
+"icon": "star"
+
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.725688,30.282746] 
+}
+},
+
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ANDREWS DORMITORY</strong>',
+"summary":  getsum('AND'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.739899,30.288161] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ANIMAL RESOURCES CENTER</strong>',
+"summary" : "hello",
+"summary":  getsum('ARC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736271,30.291648] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ANNA HISS GYMNASIUM</strong>',
+"summary":  getsum('AHG'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737864,30.288504] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ART BUILDING AND MUSEUM</strong>',
+"summary":  getsum('ART'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733046,30.286198] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BATTLE HALL</strong>',
+"summary" : "BATTLE HALL", 
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740449,30.285441] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BATTS HALL </strong>',
+"summary":  getsum('BATTS HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.739118,30.284821] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BEAUFORD H. JESTER CENTER</strong>',
+"summary":  getsum('JES'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736803,30.282891] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BENEDICT HALL </strong>',
+"summary":  getsum('BEN'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.739116,30.283991] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BERNARD AND AUDRE RAPOPORT BUILDING</strong>',
+"summary":  getsum('BERNARD AND AUDRE RAPOPORT BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736793,30.285244] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BIOMEDICAL ENGINEERING BUILDING </strong>',
+"summary":  getsum('BME'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738786,30.289276] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BLANTON DORMITORY</strong>',
+"summary":  getsum('BLANTON DORMITORY'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.739386,30.288643] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BRACKENRIDGE HALL DORM </strong>',
+"summary":  getsum('BRACKENRIDGE HALL DORM'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735994,30.283161] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>BURDINE HALL </strong>',
+"summary":  getsum('BUR'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738444,30.288865] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>CALHOUN HALL </strong>',
+"summary":  getsum('CAL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740171,30.284503] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>CAROTHERS DORMITORY</strong>',
+"summary":  getsum('CRD'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740091,30.288687] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>CHEMICAL AND PETROLEUM ENGINEERING </strong>',
+"summary":  getsum('CPE'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736265,30.290196] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>COLLECTIONS DEPOSIT LIBRARY </strong>',
+"summary":  getsum('CDL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733031,30.278791] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>COLLEGE OF BUSINESS ADMINISTRATION </strong>',
+"summary":  getsum('CBA'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737802,30.284239] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>COMPUTATIONAL RESOURCE BUILDING </strong>',
+"summary":  getsum('COMPUTATIONAL RESOURCE BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.72652,30.282213] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>CREEKSIDE RESIDENCE HALL </strong>',
+"summary":  getsum('CREEKSIDE RESIDENCE HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733402,30.288492] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>DARRELL K ROYAL TX MEMORIAL STADIUM </strong>',
+"summary":  getsum('DARRELL K ROYAL TX MEMORIAL STADIUM'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.732553,30.283589] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>DENTON A. COOLEY PAVILION </strong>',
+"summary":  getsum('DENTON A. COOLEY PAVILION'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733197,30.276237] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>E. WILLIAM DOTY FINE ARTS BUILDING </strong>',
+"summary":  getsum('E. WILLIAM DOTY FINE ARTS BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.731911,30.285876] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>E.P. SCHOCH BUILDING </strong>',
+"summary":  getsum('E.P. SCHOCH BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736722,30.285788] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>EDGAR A. SMITH BUILDING </strong>',
+"summary":  getsum('EDGAR A. SMITH BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738208,30.281142] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ENGINEERING TEACHING CENTER II </strong>',
+"summary":  getsum('ETC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735412,30.289874] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ERNEST COCKRELL JR. HALL </strong>',
+"summary":  getsum('ECJ'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735436,30.289024] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>ETTER-HARBIN ALUMNI CENTER </strong>',
+"summary":  getsum('ETTER-HARBIN ALUMNI CENTER'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.734444,30.284266] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>F.L. WINSHIP DRAMA BLDG. </strong>',
+"summary":  getsum('F.L. WINSHIP DRAMA BLDG.'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.73449,30.285765] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>FRANK C ERWIN SPECIAL EVENTS CENTER </strong>',
+"summary":  getsum('FRANK C ERWIN SPECIAL EVENTS CENTER'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.732209,30.276946] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>GARRISON HALL </strong>',
+"summary":  getsum('GAR'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738523,30.285187] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>GATES DELL COMPLEX </strong>',
+"summary":  getsum('GDC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736645,30.286292] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>GEORGE I. SANCHEZ BUILDING </strong>',
+"summary":  getsum('SZB'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738814,30.281671] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>GOLDSMITH HALL </strong>',
+"summary":  getsum('GOLDSMITH HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.741158,30.285319] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>GRADUATE SCHOOL OF BUSINESS BLDG. </strong>',
+"summary":  getsum('GSB'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738392,30.284084] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>GREGORY GYMNASIUM</strong>',
+"summary":  getsum('GRE'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736566,30.284221] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>HARRY RANSOM CENTER</strong> ',
+"summary":  getsum('HRC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.741124,30.284325] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>J.T. PATTERSON LABS.BLDG.</strong> ',
+"summary":  getsum('J.T. PATTERSON LABS.BLDG.'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.736447,30.288036] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>JACK S. BLANTON MUSEUM OF ART </strong>',
+"summary":  getsum('JACK S. BLANTON MUSEUM OF ART'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737707,30.280836] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>JACKSON GEOLOGICAL SCIENCES BLDG. </strong>',
+"summary":  getsum('JGB'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735711,30.285823] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>JESSE H. JONES COMM. CTR. (BLDG. A) </strong>',
+"summary":  getsum('JESSE H. JONES COMM. CTR. (BLDG. A)'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740739,30.28935] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : '<strong>JESSE H. JONES HALL </strong>',
+"summary":  getsum('JESSE H. JONES HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.73177,30.288641] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'JESTER DORMITORY ',
+"summary":  getsum('JESTER DORMITORY'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.73646,30.282197] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'JOE C THOMPSON CONFERENCE CENTER',
+"summary":  getsum('JOE C THOMPSON CONFERENCE CENTER'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.729171,30.287077] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'L. THEO BELLMONT HALL ',
+"summary":  getsum('L. THEO BELLMONT HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733652,30.283883] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'LEE & JOE JAMAIL TEXAS SWIMMING CTR ',
+"summary":  getsum('LEE & JOE JAMAIL TEXAS SWIMMING CTR'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733328,30.279924] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'LIBERAL ARTS BUILDING ',
+"summary":  getsum('LIBERAL ARTS BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735473,30.284998] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'LITTLEFIELD DORMITORY',
+"summary":  getsum('LITTLEFIELD DORMITORY'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.739717,30.289381] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'LYNDON B JOHNSON LIBRARY',
+"summary":  getsum('LYNDON B JOHNSON LIBRARY'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.729285,30.285843] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'MARY E. GEARING HALL',
+"summary":  getsum('GEA'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.739223,30.287842] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'MEZES HALL',
+"summary":  getsum('MEZ'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738983,30.284402] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'MOFFETT MOLECULAR BIOLOGY BLDG.',
+"summary":  getsum('MOFFETT MOLECULAR BIOLOGY BLDG.'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737256,30.288471] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'MONCRIEF-NEUHAUS ATHLETIC CENTER',
+"summary":  getsum('MONCRIEF-NEUHAUS ATHLETIC CENTER'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.732696,30.282372] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'MOORE-HILL DORMITORY',
+"summary":  getsum('MOORE-HILL DORMITORY'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735337,30.283628] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'MUSIC BUILDING & RECITAL HALL',
+"summary":  getsum('MUSIC BUILDING & RECITAL HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.731228,30.287388] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'NEURAL AND MOLECULAR SCIENCE BLDG.',
+"summary":  getsum('NEURAL AND MOLECULAR SCIENCE BLDG.'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.73709,30.289261] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'NORMAN HACKERMAN BUILDING',
+"summary":  getsum('NORMAN HACKERMAN BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.73803,30.287665] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'NORTH OFFICE BUILDING A',
+"summary":  getsum('NORTH OFFICE BUILDING A'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737947,30.289985] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'NURSING SCHOOL',
+"summary":  getsum('NURSING SCHOOL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.733557,30.277775] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'PARLIN HALL',
+"summary":  getsum('PAR'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.74011,30.284907] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'PERFORMING ARTS CENTER',
+"summary":  getsum('PERFORMING ARTS CENTER'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.731231,30.286186] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'PERRY-CASTANEDA LIBRARY',
+"summary":  getsum('PCL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738219,30.282685] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'PETER T. FLAWN ACADEMIC CENTER',
+"summary":  getsum('FAC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740311,30.286357] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'PHARMACY BUILDING',
+"summary":  getsum('PHARMACY BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738496,30.288039] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'PRATHER HALL DORMITORY PRATHER HALL DORMITORY usages is as follows',
+"summary":  getsum('PHARMACY BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735082,30.282372] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'RAINEY HALL ',
+"summary":  getsum('RAINEY HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740327,30.284133] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'RECREATIONAL SPORTS CENTER ',
+"summary":  getsum('RECREATIONAL SPORTS CENTER'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.732462,30.281577] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'RICHARD MITHOFF TRK/SCR FIELDHOUSE ',
+"summary":  getsum('RICHARD MITHOFF TRK/SCR FIELDHOUSE'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.731273,30.281986] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'ROBERT A. WELCH HALL ROBERT A. WELCH HALL usages is as follows',
+"summary":  getsum('WEL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737793,30.287029] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'SAN JACINTO RESIDENCE HALL ',
+"summary":  getsum('SAN JACINTO RESIDENCE HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.73438,30.282425] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'SARAH M. & CHARLES E. SEAY BUILDING SARAH M. & CHARLES E. SEAY BUILDING usages is as follows',
+"summary":  getsum('SEA'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.737309,30.290012] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'SCHOOL OF SOCIAL WORK BUILDING ',
+"summary":  getsum('SCHOOL OF SOCIAL WORK BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.732652,30.280684] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'SID RICHARDSON HALL ',
+"summary":  getsum('SID RICHARDSON HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.728858,30.285052] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'STUDENT ACTIVITY CENTER ',
+"summary":  getsum('SAC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735995,30.284966] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'STUDENT SERVICES BUILDING STUDENT SERVICES BUILDING usages is as follows',
+"summary":  getsum('SSB'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738349,30.29011] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'SUTTON HALL ',
+"summary":  getsum('SUTTON HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.74082,30.284989] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'TEXAS MEMORIAL MUSEUM ',
+"summary":  getsum('TEXAS MEMORIAL MUSEUM'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.732465,30.287017] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'TOWNES HALL ',
+"summary":  getsum('TOWNES HALL'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.731173,30.289143] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'UNION BUILDING ',
+"summary":  getsum('UNION BUILDING'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.741163,30.286725] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'UNIVERSITY TEACHING CENTER',
+"summary":  getsum('UTC'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.738802,30.283059] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'W.R. WOOLRICH LABS.',
+"summary":  getsum('WRW'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.735761,30.287559] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'WEST MALL OFFICE BLDG. ',
+"summary":  getsum('WEST MALL OFFICE BLDG.'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740622,30.285427] 
+}
+},
+
+{
+"type":"Feature",
+"properties": {
+"description" : 'WILLIAM RANDOLPH HEARST BLDG ',
+"summary":  getsum('WILLIAM RANDOLPH HEARST BLDG'),
+"icon": "star"
+},
+"geometry": {
+"type": "Point",
+"coordinates": [-97.740737,30.288903] 
+}
+} 
+				]
+				  
             }
-        },
+        }, 
+		
         "layout": {
             "icon-image": "{icon}-15",
             "icon-allow-overlap": true
         }
     });
+	 
 
-    // Create a popup, but don't add it to the map yet.
+    // Create a popup, but not visible on map.
     var popup = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false
     });
 
-    map.on('mouseenter', 'places', function(e) {
+    map.on('mouseenter', 'buildings', function(e) { // when mouse on building star 
         // Change the cursor style as a UI indicator.
         map.getCanvas().style.cursor = 'pointer';
 
         var coordinates = e.features[0].geometry.coordinates.slice();
         var description = e.features[0].properties.description;
+		var summary = e.features[0].properties.summary;
 
         // Ensure that if the map is zoomed out such that multiple
         // copies of the feature are visible, the popup appears
@@ -193,20 +3018,125 @@
             coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
         }
 
-        // Populate the popup and set its coordinates
-        // based on the feature found.
+        // Populate the popup, set its coordinates based on the feature found.
         popup.setLngLat(coordinates)
             .setHTML(description)
             .addTo(map);
+			screen2.innerHTML = summary; // show building data summary 
     });
+	 
+	    map.on('click', 'buildings', function (e) {
+        var coordinates = e.features[0].geometry.coordinates.slice();
+        var description = e.features[0].properties.description;
+		var summary = e.features[0].properties.summary;
 
-    map.on('mouseleave', 'places', function() {
+        /* Ensure that if the map is zoomed out such that multiple
+           copies of the feature are visible, the popup appears
+           over the copy being pointed to.*/ 
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(description)
+            .addTo(map);
+			screen2.innerHTML = summary; // show building data summary 
+    });
+ 
+    map.on('mouseleave', 'buildings', function() { //mouse leaves building star 
+	    
         map.getCanvas().style.cursor = '';
         popup.remove();
+		// the html data output stays unchainged 
+		//screen2.innerHTML = 'Hover over an icon for building data';
+		//screen2.innerHTML = summary; 
     });
+	
+
 });
+
+// toggle buttons 
+var toggleableLayerIds = [ 'heat map', 'buildings' ]; // ID of options to toggle 
+
+for (var i = 0; i < toggleableLayerIds.length; i++) {
+    var id = toggleableLayerIds[i];
+
+    var link = document.createElement('a');
+    link.href = '#';
+    link.className = 'active';
+    link.textContent = id;
+
+    link.onclick = function (e) {
+        var clickedLayer = this.textContent;
+        e.preventDefault();
+        e.stopPropagation();
+
+        var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
 		
+		// if layer is invisisle then make visible (and vice-versa) 
+        if (visibility === 'visible') {
+            map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+            this.className = '';
+        } else {
+            this.className = 'active';
+            map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+        }
+    };
+
+    var layers = document.getElementById('menu');
+    layers.appendChild(link); // add to bottom of map 
+
+	// circle part of heat map additions below 	
+	map.on('click', 'heat-point', function(e) { //if click a heat point filled circle 
+		new mapboxgl.Popup()
+		.setLngLat(e.features[0].geometry.coordinates)
+		.setHTML(e.features[0].properties.dbh+'<b> gallons of water<br/>consumed in 2012</b> ' )
+		.addTo(map);
+});
+	
+}
 </script>
-<br/> moving forward I would want to: <br>- limit search  bar to only UT buildings <br/>- color code building icons
-	</body> 
-		</html>
+<style>
+
+#menu a {
+			font-size: 13px;
+			color: #404040;
+			display: block;
+			margin: 0;
+			padding: 0;
+			padding: 10px;
+        	text-decoration: none;
+			border-bottom: 1px solid rgba(0,0,0,0.25);
+			text-align: center;
+		}
+
+		#menu a:last-child {
+			border: none;
+    }
+
+		#menu a:hover {
+			background-color: #f8f8f8;
+			color: #404040;
+    }
+
+		#menu a.active {
+			background-color: #3887be;
+			color: #ffffff;
+    }
+
+		#menu a.active:hover {
+			background: #3074a4;
+    }
+		
+		<!--new layer above  --> 
+
+</style> 
+
+<div id = 'screen2'> <br/>Hover over an icon for building data<br/>click icon to hold pop-up  </div> 
+<br/><br/> moving forward I would want to: <br>- limit search  bar to only UT buildings <br/>- color code building icons<br/><br/> 
+
+</body> 
+	
+	
+	
